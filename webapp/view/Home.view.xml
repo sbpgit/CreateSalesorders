@@ -1,0 +1,9 @@
+<mvc:View controllerName="vcpapp.vcpcreateso.controller.Home"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:u="sap.ui.unified">
+    <Page id="page" title="{i18n>title}">
+    <u:FileUploader id="FileUploader" fileType="XLSX,xlsx" buttonOnly="true" class="Emp" buttonText="Upload" icon="sap-icon://arrow-top"
+													uploadOnChange="true" change="onUpload" visible="true" sameFilenameAllowed="true"/>
+    </Page>
+</mvc:View>
