@@ -5,6 +5,6 @@
     <Page id="page" title="{i18n>title}">
     <u:FileUploader id="FileUploader" fileType="XLSX,xlsx" buttonOnly="true" class="Emp" buttonText="Upload" icon="sap-icon://arrow-top"
 													uploadOnChange="true" change="onUpload" visible="true" sameFilenameAllowed="true"/>
-    <Button text="Download" press="onDownLoad" id="idDownload"/>
+    <Button text="Download Template" press="onDownLoad" id="idDownload" icon="sap-icon://arrow-bottom"/>
     </Page>
 </mvc:View>

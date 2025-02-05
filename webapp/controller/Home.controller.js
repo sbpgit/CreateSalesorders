@@ -3,20 +3,20 @@ sap.ui.define([
     "sap/ui/export/library",
     'sap/ui/export/Spreadsheet',
     "sap/m/MessageToast"
-], (Controller,exportLibrary,Spreadsheet,MessageToast) => {
+], (Controller, exportLibrary, Spreadsheet, MessageToast) => {
     "use strict";
     var that;
     var EdmType = exportLibrary.EdmType;
     return Controller.extend("vcpapp.vcpcreateso.controller.Home", {
         onInit() {
-            that=this;
-            
+            that = this;
+
         },
-        onAfterRendering:function(){
+        onAfterRendering: function () {
             that.oGModel = that.getOwnerComponent().getModel("oGModel");
         },
         // Upload Func Starts
-        onUpload:function(oEvent){
+        onUpload: function (oEvent) {
             sap.ui.core.BusyIndicator.show();
             this.importExcel(oEvent.getParameter("files") && oEvent.getParameter("files")[0]);
         },
@@ -40,7 +40,21 @@ sap.ui.define([
                         // Here is your object for every sheet in workbook
                         excelData = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
                         if (excelData.length > 0) {
+                            const requiredColumns = ['SalesOrderNumber','Itemnumber','Materialnumber','Location', 'UID', 
+                                'MaterialAvlDate', 'Quantity','SalesOrganization', 'DistributionChannel','Division','CustomerGroup'];
+                            const nullValues = that.checkForNullValues(excelData,requiredColumns);
+                            const uidConflicts = that.validateSalesOrderUIDMapping(excelData);
+                            if(nullValues.length===0 && uidConflicts.length===0){
                             that.Import(excelData);
+                            }
+                            else if(nullValues.length>0){
+                                sap.ui.core.BusyIndicator.hide();
+                                return MessageToast.show("Null values found in uploaded data");
+                            }
+                            else if(uidConflicts.length>0){
+                                sap.ui.core.BusyIndicator.hide();
+                                return MessageToast.show("Conflicting SalesOrderNumber-UID mappings:", uidConflicts);
+                            }
                         }
                         else {
                             sap.ui.core.BusyIndicator.hide();
@@ -57,7 +71,7 @@ sap.ui.define([
 
             }
         },
-        Import:function(array){
+        Import: function (array) {
             var newArray = [], dataItems = {}, dataArray = [];
             var aScheduleSEDT = {};
             // Get Job Schedule Start/End Date/Time
@@ -66,21 +80,21 @@ sap.ui.define([
             var actionText = "/v2/catalog/salesOrderCreation";
             var JobName = "Sales Order Generation" + dCurrDateTime;
             sap.ui.core.BusyIndicator.show();
-            for(let i = 0; i < array.length; i++){
+            for (let i = 0; i < array.length; i++) {
                 dataItems = {
-                PRODUCT_ID:array[i].Materialnumber,
-                SEED_ORDER: array[i].SalesOrderNumber,
-                CONFIRMED_QTY: array[i].Quantity,
-                MAT_AVAILDATE:that.convertDateFormat(array[i].MaterialAvlDate),
-                CUSTOMER_GROUP: array[i].CustomerGroup,
-                LOCATION_ID: array[i].Location,
-                UNIQUE_ID:array[i].UID
-            };
-            dataArray.push(dataItems);            
-        }
-        var oData = {
-            SALESDATANEW: JSON.stringify(dataArray)
-        }
+                    PRODUCT_ID: array[i].Materialnumber,
+                    SEED_ORDER: array[i].SalesOrderNumber,
+                    CONFIRMED_QTY: array[i].Quantity,
+                    MAT_AVAILDATE: that.convertDateFormat(array[i].MaterialAvlDate),
+                    CUSTOMER_GROUP: array[i].CustomerGroup,
+                    LOCATION_ID: array[i].Location,
+                    UNIQUE_ID: array[i].UID
+                };
+                dataArray.push(dataItems);
+            }
+            var oData = {
+                SALESDATANEW: JSON.stringify(dataArray)
+            }
             var Obj = {
                 data: oData,
                 cron: "",
@@ -190,64 +204,64 @@ sap.ui.define([
             var aCols, oSettings, oSheet;
             var sFileName = "Sales Order Input";
             // + new Date().getTime();
-            
+
             var aCols = []
-                aCols.push({
-                    property: "SalesOrderNumber",
-                    type: EdmType.String,
-                    label: "SalesOrderNumber"
-                });
-                aCols.push({
-                    property: "Itemnumber",
-                    type: EdmType.String,
-                    label: "Itemnumber"
-                });
-                aCols.push({
-                    property: "Materialnumber",
-                    type: EdmType.String,
-                    label: "Materialnumber"
-                });
-                aCols.push({
-                    property: "Location",
-                    type: EdmType.String,
-                    label: "Location"
-                });
-                aCols.push({
-                    property: "UID",
-                    type: EdmType.String,
-                    label: "UID"
-                });
-                aCols.push({
-                    property: "MaterialAvlDate",
-                    type: EdmType.String,
-                    label: "MaterialAvlDate"
-                });
-                aCols.push({
-                    property: "Quantity",
-                    type: EdmType.String,
-                    label: "Quantity"
-                });
-                aCols.push({
-                    property: "SalesOrganization",
-                    type: EdmType.String,
-                    label: "SalesOrganization"
-                });
-                aCols.push({
-                    property: "DistributionChannel",
-                    type: EdmType.String,
-                    label: "DistributionChannel"
-                });
-                aCols.push({
-                    property: "Division",
-                    type: EdmType.String,
-                    label: "Division"
-                });
-                aCols.push({
-                    property: "CustomerGroup",
-                    type: EdmType.String,
-                    label: "CustomerGroup"
-                });
-    
+            aCols.push({
+                property: "SalesOrderNumber",
+                type: EdmType.String,
+                label: "SalesOrderNumber"
+            });
+            aCols.push({
+                property: "Itemnumber",
+                type: EdmType.String,
+                label: "Itemnumber"
+            });
+            aCols.push({
+                property: "Materialnumber",
+                type: EdmType.String,
+                label: "Materialnumber"
+            });
+            aCols.push({
+                property: "Location",
+                type: EdmType.String,
+                label: "Location"
+            });
+            aCols.push({
+                property: "UID",
+                type: EdmType.String,
+                label: "UID"
+            });
+            aCols.push({
+                property: "MaterialAvlDate",
+                type: EdmType.String,
+                label: "MaterialAvlDate"
+            });
+            aCols.push({
+                property: "Quantity",
+                type: EdmType.String,
+                label: "Quantity"
+            });
+            aCols.push({
+                property: "SalesOrganization",
+                type: EdmType.String,
+                label: "SalesOrganization"
+            });
+            aCols.push({
+                property: "DistributionChannel",
+                type: EdmType.String,
+                label: "DistributionChannel"
+            });
+            aCols.push({
+                property: "Division",
+                type: EdmType.String,
+                label: "Division"
+            });
+            aCols.push({
+                property: "CustomerGroup",
+                type: EdmType.String,
+                label: "CustomerGroup"
+            });
+
             var oSettings = {
                 workbook: {
                     columns: aCols
@@ -262,5 +276,28 @@ sap.ui.define([
             });
         },
         // DownLoad Func Ends
+        // Function to check for null values
+        checkForNullValues: function (data,requiredColumns) {
+            return data.filter(row => {
+                return requiredColumns.some(column => !(column in row) || row[column] === null || row[column] === '');
+              });
+        },
+        validateSalesOrderUIDMapping: function (data) {
+            const mapping = {};
+            const conflicts = [];
+
+            data.forEach(row => {
+                const { SalesOrderNumber, UID } = row;
+                if (mapping[SalesOrderNumber]) {
+                    if (mapping[SalesOrderNumber] !== UID) {
+                        conflicts.push({ SalesOrderNumber, existingUID: mapping[SalesOrderNumber], conflictingUID: UID });
+                    }
+                } else {
+                    mapping[SalesOrderNumber] = UID;
+                }
+            });
+
+            return conflicts;
+        }
     });
 });
