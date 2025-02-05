@@ -1,8 +1,12 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
-], (Controller) => {
+    "sap/ui/core/mvc/Controller",
+    "sap/ui/export/library",
+    'sap/ui/export/Spreadsheet',
+    "sap/m/MessageToast"
+], (Controller,exportLibrary,Spreadsheet,MessageToast) => {
     "use strict";
     var that;
+    var EdmType = exportLibrary.EdmType;
     return Controller.extend("vcpapp.vcpcreateso.controller.Home", {
         onInit() {
             that=this;
@@ -40,7 +44,7 @@ sap.ui.define([
                         }
                         else {
                             sap.ui.core.BusyIndicator.hide();
-                            return MessageToast.show("Wrong file uploaded")
+                            return MessageToast.show("No Data in uploaded file");
                         }
                     });
                 }
@@ -179,6 +183,84 @@ sap.ui.define([
 
             // Concatenate the components in yyyy-MM-dd format
             return `${year}-${month}-${day}`;
-        }
+        },
+        // DownLoad func Starts
+        onDownLoad: function (oEvent) {
+            var aDown = []
+            var aCols, oSettings, oSheet;
+            var sFileName = "Sales Order Input";
+            // + new Date().getTime();
+            
+            var aCols = []
+                aCols.push({
+                    property: "SalesOrderNumber",
+                    type: EdmType.String,
+                    label: "SalesOrderNumber"
+                });
+                aCols.push({
+                    property: "Itemnumber",
+                    type: EdmType.String,
+                    label: "Itemnumber"
+                });
+                aCols.push({
+                    property: "Materialnumber",
+                    type: EdmType.String,
+                    label: "Materialnumber"
+                });
+                aCols.push({
+                    property: "Location",
+                    type: EdmType.String,
+                    label: "Location"
+                });
+                aCols.push({
+                    property: "UID",
+                    type: EdmType.String,
+                    label: "UID"
+                });
+                aCols.push({
+                    property: "MaterialAvlDate",
+                    type: EdmType.String,
+                    label: "MaterialAvlDate"
+                });
+                aCols.push({
+                    property: "Quantity",
+                    type: EdmType.String,
+                    label: "Quantity"
+                });
+                aCols.push({
+                    property: "SalesOrganization",
+                    type: EdmType.String,
+                    label: "SalesOrganization"
+                });
+                aCols.push({
+                    property: "DistributionChannel",
+                    type: EdmType.String,
+                    label: "DistributionChannel"
+                });
+                aCols.push({
+                    property: "Division",
+                    type: EdmType.String,
+                    label: "Division"
+                });
+                aCols.push({
+                    property: "CustomerGroup",
+                    type: EdmType.String,
+                    label: "CustomerGroup"
+                });
+    
+            var oSettings = {
+                workbook: {
+                    columns: aCols
+                },
+                dataSource: aDown,
+                fileName: sFileName,
+                worker: true
+            };
+            var oSheet = new Spreadsheet(oSettings);
+            oSheet.build().finally(function () {
+                oSheet.destroy();
+            });
+        },
+        // DownLoad Func Ends
     });
 });
