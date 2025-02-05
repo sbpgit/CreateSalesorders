@@ -2,8 +2,10 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/export/library",
     'sap/ui/export/Spreadsheet',
-    "sap/m/MessageToast"
-], (Controller, exportLibrary, Spreadsheet, MessageToast) => {
+    "sap/m/MessageToast",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator",
+], (Controller, exportLibrary, Spreadsheet, MessageToast,Filter,FilterOperator) => {
     "use strict";
     var that;
     var EdmType = exportLibrary.EdmType;
@@ -45,7 +47,15 @@ sap.ui.define([
                             const nullValues = that.checkForNullValues(excelData,requiredColumns);
                             const uidConflicts = that.validateSalesOrderUIDMapping(excelData);
                             if(nullValues.length===0 && uidConflicts.length===0){
-                            that.Import(excelData);
+                            const uniqueMaterialNumbers = that.getUniqueMaterialNumbers(excelData);
+                            const uniqueUIDs = that.getUniqueUIDs(excelData);
+                            if(uniqueMaterialNumbers.length===1){
+                           that.getUploadData(excelData,uniqueMaterialNumbers,uniqueUIDs);
+                            }
+                            else{
+                                sap.ui.core.BusyIndicator.hide();
+                                return MessageToast.show("Material numbers are more than one.")
+                            }
                             }
                             else if(nullValues.length>0){
                                 sap.ui.core.BusyIndicator.hide();
@@ -298,6 +308,68 @@ sap.ui.define([
             });
 
             return conflicts;
-        }
+        },
+        getUniqueMaterialNumbers:function(data) {
+            const uniqueMaterials = new Set(data.map(row => row.Materialnumber));
+            return Array.from(uniqueMaterials);
+          },
+          getUniqueUIDs:function(data) {
+            const uniqueUIDs = new Set(data.map(row => row.UID));
+            return Array.from(uniqueUIDs);
+          },
+          getUploadData:function(excelData,uniqueMatNumber,UIDs){
+            this.getOwnerComponent().getModel("BModel").read("/getPartialProduct", {
+                filters: [
+                    new Filter("REF_PRODID", FilterOperator.EQ, uniqueMatNumber[0]),
+                ],
+                success: function (oData) {
+                    if(oData.results.length>0){
+                        that.getUniqueIdsNew(uniqueMatNumber[0],UIDs,excelData);                        
+                    }
+                    else{
+                        sap.ui.core.BusyIndicator.hide();
+                        return MessageToast.show("Material number not available");
+                    }
+                },
+                error: function (error) {
+                    sap.ui.core.BusyIndicator.hide();
+                    sap.m.MessageToast.show("Service Connectivity Issue!");
+                },
+            });
+           
+          },
+          getUniqueIdsNew:function(matnum,UIDS,excelData){
+            that.getOwnerComponent().getModel("BModel").callFunction("/getUniqueIDsNew", {
+                method: "GET",
+                urlParameters: {
+                    PRODUCT_ID: JSON.stringify(matnum)
+                },
+                success: function (oData) {
+                    var totalUIDS = JSON.parse(oData.getUniqueIDsNew);
+                    if(totalUIDS.length>0){
+                    var uIDS = UIDS; 
+                    const myDataCheckResults = that.checkMyDataInUniqueIDs(totalUIDS, uIDS);       
+                    if(myDataCheckResults.length===0){
+                        that.Import(excelData);
+                    }
+                    else{
+                        sap.ui.core.BusyIndicator.hide();
+                        return MessageToast.show("Few UIDs doesn't belong to this Material Number")
+                    }
+                    }
+                    else{
+                        sap.ui.core.BusyIndicator.hide();
+                        return MessageToast.show("No UIDs available for the selected Material Number");
+                    }
+                },
+                error:function(er){
+
+                }
+            });
+          },
+          checkMyDataInUniqueIDs:function(uniqueIDs, myData) {
+            const uniqueIDSet = new Set(uniqueIDs.map(item => item.UNIQUE_ID));
+            return myData.filter(id => !uniqueIDSet.has(JSON.parse(id)));
+          }
     });
 });
