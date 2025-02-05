@@ -74,8 +74,11 @@ sap.ui.define([
             };
             dataArray.push(dataItems);            
         }
+        var oData = {
+            SALESDATANEW: JSON.stringify(dataArray)
+        }
             var Obj = {
-                data: dataArray,
+                data: oData,
                 cron: "",
                 time: aScheduleSEDT.oneTime,
                 active: true,
@@ -100,6 +103,7 @@ sap.ui.define([
                     jobDetails: JSON.stringify(finalList),
                 },
                 success: function (oData) {
+                    sap.ui.core.BusyIndicator.hide();
                     sap.m.MessageToast.show(oData.addMLJob + ": Job Created");
                 },
                 error: function (error) {
