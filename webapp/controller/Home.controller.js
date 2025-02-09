@@ -5,7 +5,7 @@ sap.ui.define([
     "sap/m/MessageToast",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
-], (Controller, exportLibrary, Spreadsheet, MessageToast,Filter,FilterOperator) => {
+], (Controller, exportLibrary, Spreadsheet, MessageToast, Filter, FilterOperator) => {
     "use strict";
     var that;
     var EdmType = exportLibrary.EdmType;
@@ -42,26 +42,26 @@ sap.ui.define([
                         // Here is your object for every sheet in workbook
                         excelData = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
                         if (excelData.length > 0) {
-                            const requiredColumns = ['SalesOrderNumber','Itemnumber','Materialnumber','Location', 'UID', 
-                                'MaterialAvlDate', 'Quantity','SalesOrganization', 'DistributionChannel','Division','CustomerGroup'];
-                            const nullValues = that.checkForNullValues(excelData,requiredColumns);
+                            const requiredColumns = ['SalesOrderNumber', 'Itemnumber', 'Materialnumber', 'Location', 'UID',
+                                'MaterialAvlDate', 'Quantity', 'SalesOrganization', 'DistributionChannel', 'Division', 'CustomerGroup'];
+                            const nullValues = that.checkForNullValues(excelData, requiredColumns);
                             const uidConflicts = that.validateSalesOrderUIDMapping(excelData);
-                            if(nullValues.length===0 && uidConflicts.length===0){
-                            const uniqueMaterialNumbers = that.getUniqueMaterialNumbers(excelData);
-                            const uniqueUIDs = that.getUniqueUIDs(excelData);
-                            if(uniqueMaterialNumbers.length===1){
-                           that.getUploadData(excelData,uniqueMaterialNumbers,uniqueUIDs);
+                            if (nullValues.length === 0 && uidConflicts.length === 0) {
+                                const uniqueMaterialNumbers = that.getUniqueMaterialNumbers(excelData);
+                                const uniqueUIDs = that.getUniqueUIDs(excelData);
+                                if (uniqueMaterialNumbers.length === 1) {
+                                    that.getUploadData(excelData, uniqueMaterialNumbers, uniqueUIDs);
+                                }
+                                else {
+                                    sap.ui.core.BusyIndicator.hide();
+                                    return MessageToast.show("Material numbers are more than one.")
+                                }
                             }
-                            else{
-                                sap.ui.core.BusyIndicator.hide();
-                                return MessageToast.show("Material numbers are more than one.")
-                            }
-                            }
-                            else if(nullValues.length>0){
+                            else if (nullValues.length > 0) {
                                 sap.ui.core.BusyIndicator.hide();
                                 return MessageToast.show("Null values found in uploaded data");
                             }
-                            else if(uidConflicts.length>0){
+                            else if (uidConflicts.length > 0) {
                                 sap.ui.core.BusyIndicator.hide();
                                 return MessageToast.show("Conflicting SalesOrderNumber-UID mappings:", uidConflicts);
                             }
@@ -82,13 +82,7 @@ sap.ui.define([
             }
         },
         Import: function (array) {
-            var newArray = [], dataItems = {}, dataArray = [];
-            var aScheduleSEDT = {};
-            // Get Job Schedule Start/End Date/Time
-            aScheduleSEDT = that.getScheduleSEDT();
-            var dCurrDateTime = new Date().getTime();
-            var actionText = "/v2/catalog/salesOrderCreation";
-            var JobName = "Sales Order Generation" + dCurrDateTime;
+            var  dataItems = {}, dataArray = [];
             sap.ui.core.BusyIndicator.show();
             for (let i = 0; i < array.length; i++) {
                 dataItems = {
@@ -102,8 +96,36 @@ sap.ui.define([
                 };
                 dataArray.push(dataItems);
             }
+            this.getOwnerComponent().getModel("BModel").callFunction("/InsertIntoTempSO" , {
+                method: "GET",
+                urlParameters: {
+                    SODATA: JSON.stringify(dataArray),
+                },
+                success: function (oData) {
+                    if(oData.InsertIntoTempSO.includes("Successfully")){
+                        that.generateJob();
+                    }
+                    else{
+                        sap.ui.core.BusyIndicator.hide();
+                        MessageToast.show(oData.InsertIntoTempSO)
+                    }
+                },
+                error: function (error) {
+                    sap.ui.core.BusyIndicator.hide();
+                    sap.m.MessageToast.show(error.message);
+                }
+            });
+        },
+        generateJob:function(){
+            var newArray = [];
+            var aScheduleSEDT = {};
+            // Get Job Schedule Start/End Date/Time
+            aScheduleSEDT = that.getScheduleSEDT();
+            var dCurrDateTime = new Date().getTime();
+            var actionText = "/v2/catalog/salesOrderCreation";
+            var JobName = "Sales Order Generation" + dCurrDateTime;
             var oData = {
-                SALESDATANEW: JSON.stringify(dataArray)
+                SALESDATANEW: JSON.stringify("")
             }
             var Obj = {
                 data: oData,
@@ -136,7 +158,7 @@ sap.ui.define([
                 },
                 error: function (error) {
                     sap.ui.core.BusyIndicator.hide();
-                    sap.m.MessageToast.show("Service Connectivity Issue!");
+                    sap.m.MessageToast.show(error.message);
                 },
             });
         },
@@ -196,7 +218,12 @@ sap.ui.define([
         },
         convertDateFormat: function (dateString) {
             // Split the original date string into day, month, and year components
-            var parts = dateString.split('/');
+            if (dateString.includes("-")) {
+                var parts = dateString.split('-');
+            }
+            else if (dateString.includes("/")) {
+                var parts = dateString.split('/');
+            }
             var day = parts[2]; // Day component
             var month = parts[1]; // Month component
             var year = parts[0]; // Year component
@@ -287,10 +314,10 @@ sap.ui.define([
         },
         // DownLoad Func Ends
         // Function to check for null values
-        checkForNullValues: function (data,requiredColumns) {
+        checkForNullValues: function (data, requiredColumns) {
             return data.filter(row => {
                 return requiredColumns.some(column => !(column in row) || row[column] === null || row[column] === '');
-              });
+            });
         },
         validateSalesOrderUIDMapping: function (data) {
             const mapping = {};
@@ -309,24 +336,24 @@ sap.ui.define([
 
             return conflicts;
         },
-        getUniqueMaterialNumbers:function(data) {
+        getUniqueMaterialNumbers: function (data) {
             const uniqueMaterials = new Set(data.map(row => row.Materialnumber));
             return Array.from(uniqueMaterials);
-          },
-          getUniqueUIDs:function(data) {
+        },
+        getUniqueUIDs: function (data) {
             const uniqueUIDs = new Set(data.map(row => row.UID));
             return Array.from(uniqueUIDs);
-          },
-          getUploadData:function(excelData,uniqueMatNumber,UIDs){
+        },
+        getUploadData: function (excelData, uniqueMatNumber, UIDs) {
             this.getOwnerComponent().getModel("BModel").read("/getPartialProduct", {
                 filters: [
                     new Filter("REF_PRODID", FilterOperator.EQ, uniqueMatNumber[0]),
                 ],
                 success: function (oData) {
-                    if(oData.results.length>0){
-                        that.getUniqueIdsNew(uniqueMatNumber[0],UIDs,excelData);                        
+                    if (oData.results.length > 0) {
+                        that.getUniqueIdsNew(uniqueMatNumber[0], UIDs, excelData);
                     }
-                    else{
+                    else {
                         sap.ui.core.BusyIndicator.hide();
                         return MessageToast.show("Material number not available");
                     }
@@ -336,9 +363,9 @@ sap.ui.define([
                     sap.m.MessageToast.show("Service Connectivity Issue!");
                 },
             });
-           
-          },
-          getUniqueIdsNew:function(matnum,UIDS,excelData){
+
+        },
+        getUniqueIdsNew: function (matnum, UIDS, excelData) {
             that.getOwnerComponent().getModel("BModel").callFunction("/getUniqueIDsNew", {
                 method: "GET",
                 urlParameters: {
@@ -346,30 +373,30 @@ sap.ui.define([
                 },
                 success: function (oData) {
                     var totalUIDS = JSON.parse(oData.getUniqueIDsNew);
-                    if(totalUIDS.length>0){
-                    var uIDS = UIDS; 
-                    const myDataCheckResults = that.checkMyDataInUniqueIDs(totalUIDS, uIDS);       
-                    if(myDataCheckResults.length===0){
-                        that.Import(excelData);
+                    if (totalUIDS.length > 0) {
+                        var uIDS = UIDS;
+                        const myDataCheckResults = that.checkMyDataInUniqueIDs(totalUIDS, uIDS);
+                        if (myDataCheckResults.length === 0) {
+                            that.Import(excelData);
+                        }
+                        else {
+                            sap.ui.core.BusyIndicator.hide();
+                            return MessageToast.show("Few UIDs doesn't belong to this Material Number")
+                        }
                     }
-                    else{
-                        sap.ui.core.BusyIndicator.hide();
-                        return MessageToast.show("Few UIDs doesn't belong to this Material Number")
-                    }
-                    }
-                    else{
+                    else {
                         sap.ui.core.BusyIndicator.hide();
                         return MessageToast.show("No UIDs available for the selected Material Number");
                     }
                 },
-                error:function(er){
+                error: function (er) {
 
                 }
             });
-          },
-          checkMyDataInUniqueIDs:function(uniqueIDs, myData) {
+        },
+        checkMyDataInUniqueIDs: function (uniqueIDs, myData) {
             const uniqueIDSet = new Set(uniqueIDs.map(item => item.UNIQUE_ID));
             return myData.filter(id => !uniqueIDSet.has(JSON.parse(id)));
-          }
+        }
     });
 });
