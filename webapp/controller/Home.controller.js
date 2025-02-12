@@ -88,7 +88,7 @@ sap.ui.define([
                 dataItems = {
                     PRODUCT_ID: array[i].Materialnumber,
                     SEED_ORDER: array[i].SalesOrderNumber,
-                    CONFIRMED_QTY: array[i].Quantity,
+                    ORD_QTY: array[i].Quantity,
                     MAT_AVAILDATE: that.convertDateFormat(array[i].MaterialAvlDate),
                     CUSTOMER_GROUP: array[i].CustomerGroup,
                     LOCATION_ID: array[i].Location,
