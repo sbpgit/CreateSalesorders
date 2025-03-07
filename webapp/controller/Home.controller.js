@@ -14,6 +14,8 @@ sap.ui.define([
             that = this;
 
         },
+
+        
         onAfterRendering: function () {
             that.oGModel = that.getOwnerComponent().getModel("oGModel");
         },
