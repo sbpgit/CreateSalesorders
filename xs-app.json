@@ -10,7 +10,7 @@
       "csrfProtection": false,
       "scope":{
           "GET": ["$XSAPPNAME.User",
-        "$XSAPPNAME.read"],
+         "$XSAPPNAME.read"],
           "PUT": ["$XSAPPNAME.User",
         "$XSAPPNAME.read"],
           "PATCH": ["$XSAPPNAME.User",
