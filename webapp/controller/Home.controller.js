@@ -86,6 +86,7 @@ sap.ui.define([
         Import: function (array) {
             var  dataItems = {}, dataArray = [];
             sap.ui.core.BusyIndicator.show();
+            array = array.filter(id=> id.Quantity>0);
             for (let i = 0; i < array.length; i++) {
                 dataItems = {
                     PRODUCT_ID: array[i].Materialnumber,
@@ -98,25 +99,25 @@ sap.ui.define([
                 };
                 dataArray.push(dataItems);
             }
-            this.getOwnerComponent().getModel("BModel").callFunction("/InsertIntoTempSO" , {
-                method: "GET",
-                urlParameters: {
-                    SODATA: JSON.stringify(dataArray),
-                },
-                success: function (oData) {
-                    if(oData.InsertIntoTempSO.includes("Successfully")){
-                        that.generateJob();
-                    }
-                    else{
-                        sap.ui.core.BusyIndicator.hide();
-                        MessageToast.show(oData.InsertIntoTempSO)
-                    }
-                },
-                error: function (error) {
-                    sap.ui.core.BusyIndicator.hide();
-                    sap.m.MessageToast.show(error.message);
-                }
-            });
+            // this.getOwnerComponent().getModel("BModel").callFunction("/InsertIntoTempSO" , {
+            //     method: "GET",
+            //     urlParameters: {
+            //         SODATA: JSON.stringify(dataArray),
+            //     },
+            //     success: function (oData) {
+            //         if(oData.InsertIntoTempSO.includes("Successfully")){
+            //             that.generateJob();
+            //         }
+            //         else{
+            //             sap.ui.core.BusyIndicator.hide();
+            //             MessageToast.show(oData.InsertIntoTempSO)
+            //         }
+            //     },
+            //     error: function (error) {
+            //         sap.ui.core.BusyIndicator.hide();
+            //         sap.m.MessageToast.show(error.message);
+            //     }
+            // });
         },
         generateJob:function(){
             var newArray = [];
