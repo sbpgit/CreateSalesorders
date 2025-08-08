@@ -2,9 +2,10 @@
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
     xmlns:u="sap.ui.unified">
-    <Page id="page" title="{i18n>title}">
-    <u:FileUploader id="FileUploader" fileType="XLSX,xlsx" buttonOnly="true" class="Emp" buttonText="Upload" icon="sap-icon://arrow-top"
+    <!-- <Page id="pageCS" title="{i18n>title}"> -->
+     <Page id="pageCS" title="{i18n>title}">
+    <u:FileUploader id="FileUploaderCS" fileType="XLSX,xlsx" buttonOnly="true" class="Emp" buttonText="Upload" icon="sap-icon://arrow-top"
 													uploadOnChange="true" change="onUpload" visible="true" sameFilenameAllowed="true"/>
-    <Button text="Download Template" press="onDownLoad" id="idDownload" icon="sap-icon://arrow-bottom"/>
+    <Button text="Download Template" press="onDownLoad" id="idDownloadCS" icon="sap-icon://arrow-bottom"/>
     </Page>
 </mvc:View>

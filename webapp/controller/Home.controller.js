@@ -37,7 +37,7 @@ sap.ui.define([
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     var data = e.target.result;
-                    var workbook = XLSX.read(data, {
+                    var workbook = XLSX.rtitlead(data, {
                         type: 'binary'
                     });
                     workbook.SheetNames.forEach(function (sheetName) {
